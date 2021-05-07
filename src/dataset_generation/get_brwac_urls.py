@@ -17,10 +17,16 @@ def read_brwac_docs(buffer):
     docs = tree.findall('doc')
     return docs, buffer_out
 
-def search_on_doc(text, doc):
+def search_on_doc(text, web_title, web_text):
     try:
-        lower_text = ' ' + text.lower() + ' '
-        if lower_text in doc.attrib['title'].lower() or lower_text in doc.text.lower():
+        lower_text = text.lower()
+        lower_title = web_title.lower()
+        lower_web_text = web_text.lower()
+        if lower_text in lower_title or lower_text in lower_web_text:
+            #print(lower_text)
+            #print(lower_title)
+            #if('anno domini' in lower_text):
+            #    print(lower_text)
             return True
         return False
     except:
@@ -41,15 +47,17 @@ def search_on_brwac(wiki_ids, wiki_titles, brwac_file_path):
             if(docs is not None):
                 for doc in docs:
                     for j in range(len(wiki_ids)):
-                        if(search_on_doc(wiki_titles[j], doc)):
+                        sentences = doc.findall('s')
+                        full_text = ''
+                        ss = []
+                        for sentence in sentences:
+                            ss.append(sentence.text)
+                            full_text = full_text + sentence.text
+                        if(search_on_doc(wiki_titles[j], doc.attrib['title'], full_text)):
                             if('uri' in doc.attrib):
                                 if('wikipedia' not in doc.attrib['uri']):
                                     if(doc.attrib['uri'] not in wiki_urls[j]['urls']):
                                         #wiki_urls[j]['urls'].append(doc.attrib['uri'])
-                                        sentences = doc.findall('s')
-                                        ss = []
-                                        for sentence in sentences:
-                                            ss.append(sentence.text)
                                         hash_table.set_val(doc.attrib['uri'], ss)
                                         #print(ss)
                                         wiki_urls[j]['urls'].append(doc.attrib['uri'])
