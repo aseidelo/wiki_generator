@@ -158,49 +158,25 @@ def detect_clone(text, article_sections):
 				return True
 	return False
 
-def get_page_text(url, article_sections):
+def get_page_text(url, article_sections=None):
 	to_save = []
 	try:
-		#print(url)
 		url_fetch = urlopen(url, timeout=3)
 		url_bytes = url_fetch.read()
 		html_str = url_bytes#.decode("utf-8")
-		#print(html_str)
-		#start_bsoup = time.time()
 		text = bsoup_parse(html_str)
-		#print('url: {}, size: {}'.format(url, len(text)))
-		#print(text)
-		#end_bsoup = time.time()
-		#print('Bsoup time for {}: {}'.format(url, (end_bsoup - start_bsoup)))
-		#text = html2text_parse(html_str)
-		#print(text)
-		#print(text)
-		#text = htmlparser.get_text_from_html(html_str).encode('utf-8')
-		#start_detect_clone = time.time()
-		if not detect_clone(text, article_sections):
-			#end_detect_clone = time.time()
-			#print('Detect_clone time for {}: {}'.format(url, (end_detect_clone - start_detect_clone)))
-			paragraphs = text.split('\n')
-			for paragraph in paragraphs:
-				not_good, processed_para = filter_paragraph(paragraph)
-				if not not_good:
-					lang = detect(processed_para)
-					#print(paragraph)
-					#if(lang not in to_save):
-					#	to_save[lang] = []
-					if(lang == 'pt' or lang == 'en'):
-						to_save.append(processed_para)
-		#print(to_save)
-		#end_html2text = time.time()
-		#print((end_bsoup - start_bsoup), (end_html2text - end_bsoup))
-		#with open("BSOUP.txt", 'a+') as file:
-		#	file.write(textv1)
-		#with open("HTML2TEXT.txt", 'a+') as file:
-		#	file.write(textv2)
-		#print(text)
+		if article_sections != None:
+			if detect_clone(text, article_sections):
+				return to_save
+		paragraphs = text.split('\n')
+		for paragraph in paragraphs:
+			not_good, processed_para = filter_paragraph(paragraph)
+			if not not_good:
+				lang = detect(processed_para)
+				if(lang == 'pt'):
+					to_save.append(processed_para)
 	except Exception as e:
 		pass
-		#print('url {} error: {}'.format(url, e))
 	finally:
 		return to_save
 
@@ -220,7 +196,7 @@ def worker():
 			if(extension not in ['pdf', 'mp3', 'mp4', 'zip']):
 				paragraphs = get_page_text(url, article_sections)
 				#print(paragraphs)
-				if(len(paragraphs) is not 0):
+				if(len(paragraphs) != 0):
 					inputs_to_store.put([article_id, article_title, article_sections_titles, article_sections, paragraphs])
 					#print([item, paragraphs])
 				#print(f'Finished {item}')
@@ -375,7 +351,7 @@ def main(args):
 		#print('aaa')
 		#print(inputs_to_store.qsize())
 		#web_paragraphs = []
-		if(inputs_to_store.qsize() is not 0):
+		if(inputs_to_store.qsize() != 0):
 			to_outs1 = {}
 			to_outs2 = {}
 			for url_data in drain(inputs_to_store):

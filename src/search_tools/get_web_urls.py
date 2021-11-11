@@ -1,7 +1,7 @@
 from codecs import open
+from googlesearch import search
 import json
 import threading, queue
-import requests
 
 '''
 Input:
@@ -12,7 +12,7 @@ Input:
 '''
 
 def check_restrictions(url):
-    restrictions = ['wikipedia.org', '.pdf', '.mp4', '.jpeg', '.jpg']
+    restrictions = ['.pdf', '.mp4', '.jpeg', '.jpg']# ['wikipedia.org', '.pdf', '.mp4', '.jpeg', '.jpg']
     for restriction in restrictions:
         if(restriction in url):
             return False
@@ -24,7 +24,7 @@ q_out = []
 def worker():
     while True:
         article  = q_in.get()
-        urls = search(article[0], num_results = 15)
+        urls = search(article[1], lang="pt-br")#num_results = 15, lang="pt-br")
         good_urls = []
         query = ''
         for url in urls:
@@ -32,8 +32,7 @@ def worker():
                 query = url
             elif (check_restrictions(url)):
                 good_urls.append(url)
-        if(len(good_urls) >= 5):
-            q_out.append([article[0], article[1], good_urls, query])
+        q_out.append([article[0], article[1], good_urls, query])
         q_in.task_done()
         #print(f'Finished {item}')
 
@@ -75,18 +74,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def search(article_id, num_results=10):
-    base_query = 'https://pt.wikipedia.org/w/api.php?action=parse&prop=externallinks&format=json&pageid='
-    query = base_query + str(article_id)
-    r = requests.get(query)
-    out = r.json()
-    if('parse' in out):
-        if('externallinks' in out['parse']):
-            return out['parse']['externallinks'][:num_results]
-    print(out)
-    return []
-
-def search_urls(wiki_articles, workers = 1):
+def search_urls(wiki_articles, workers = 1, n=15):
     global q_in, q_out
     articles_and_urls = []
     print('Searching urls:')
@@ -96,7 +84,7 @@ def search_urls(wiki_articles, workers = 1):
             print('({}/{})'.format(i, len(wiki_articles)))
             article_id = article[0]
             article_title = article[1]
-            urls = search(article_id, num_results = 15)
+            urls = search(article_title, num_results = n, lang="pt-br")
             good_urls = []
             query = ''
             for url in urls:
@@ -105,8 +93,7 @@ def search_urls(wiki_articles, workers = 1):
                 elif (check_restrictions(url)):
                     good_urls.append(url)
             #print('title: {} id: {} \n {} urls: {}'.format(article_title, article_id, len(good_urls), good_urls))
-            if(len(good_urls) >= 5):
-                articles_and_urls.append([article_id, article_title, good_urls, query])
+            articles_and_urls.append([article_id, article_title, good_urls, query])
             i = i + 1
     elif(workers > 1):
         for article in wiki_articles:
@@ -136,15 +123,15 @@ def search_and_store_urls(wiki_articles, output_path, batch_size, workers = 1):
 
 if __name__ == '__main__':
     input_path = 'dumps/index/'
-    input_file = 'ptwiki-20210320-pages-articles-multistream-index6.txt-p5024909p6524729'
-    output_path = 'wiki_urls_refs/'
-    output_file = 'p5024909p6524729.json'
+    input_file = 'ptwiki-20210320-pages-articles-multistream-index3.txt-p513713p1629224'
+    output_path = 'urls/'
+    output_file = 'p513713p1629224.json'
     batch_size = 10
     n_workers = 10
     '''
-    ptwiki-20210320-pages-articles-multistream-index1.txt-p1p105695 DONE
-    ptwiki-20210320-pages-articles-multistream-index2.txt-p105696p513712 DONE
-    ptwiki-20210320-pages-articles-multistream-index3.txt-p513713p1629224 DONE
+    ptwiki-20210320-pages-articles-multistream-index1.txt-p1p105695
+    ptwiki-20210320-pages-articles-multistream-index2.txt-p105696p513712
+    ptwiki-20210320-pages-articles-multistream-index3.txt-p513713p1629224
     ptwiki-20210320-pages-articles-multistream-index4.txt-p1629225p2880804
     ptwiki-20210320-pages-articles-multistream-index5.txt-p2880805p4380804
     ptwiki-20210320-pages-articles-multistream-index5.txt-p4380805p5024908
