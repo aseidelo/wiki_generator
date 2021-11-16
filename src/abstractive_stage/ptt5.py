@@ -1,6 +1,6 @@
 import pandas as pd
 import torch
-from transformers import T5TokenizerFast, T5ForConditionalGeneration
+from transformers import T5TokenizerFast, T5ForConditionalGeneration, T5EncoderModel
 from datasets import load_dataset, load_metric, DatasetDict, Dataset, ClassLabel
 
 def load_ptt5(path, model_name, checkpoint):
@@ -9,6 +9,14 @@ def load_ptt5(path, model_name, checkpoint):
     # load tokenizer and model
     tokenizer = T5TokenizerFast.from_pretrained(path + model_name + '/' + checkpoint)
     model = T5ForConditionalGeneration.from_pretrained(path + model_name + '/' + checkpoint, gradient_checkpointing=True, use_cache=False).to("cuda").half()
+    model.config.min_length = 50
+
+def load_ptt5_encoder(path, model_name, checkpoint):
+    global tokenizer
+    global model
+    # load tokenizer and model encoder
+    tokenizer = T5TokenizerFast.from_pretrained(path + model_name + '/' + checkpoint)
+    model = T5EncoderModel.from_pretrained(path + model_name + '/' + checkpoint, gradient_checkpointing=True, use_cache=False).to("cuda").half()
     model.config.min_length = 50
 
 def generate_answer(batch, max_length=768):
