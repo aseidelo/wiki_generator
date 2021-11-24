@@ -54,7 +54,7 @@ The algorithm will google the list of titles, scrap texts from retrieved urls, a
 We compared 7 different combinations of extractive and abstractive stages on unseen examples from [BrWac2Wiki](https://github.com/aseidelo/BrWac2Wiki). 
 TF-IDF + PTT5 with J (number of input tokens) = 512 had
 
-![Results](https://github.com/aseidelo/plsum/docs/results.jpg)
+![Results](https://github.com/aseidelo/plsum/docs/results.png)
 
 ## Acknowledgements
 This research was supported by _Itaú Unibanco S.A._, with the scholarship program of _Programa de Bolsas Itaú_ (PBI), and partially financed by the Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (CAPES), Finance Code 001, and CNPQ (grant 310085/2020-9), Brazil.
