@@ -1,4 +1,4 @@
-# wiki_generator
+# PLSUM
 Generating pt-br Wikipedia articles from refference documents from the web.
 
 This is the official repository for the paper "PLSUM: Generating PT-BR Wikipedia by Summarizing Websites", by André Seidel Oliveira¹ and Anna Helena Reali Costa¹, that is going to be presented at ENIAC 2021.
