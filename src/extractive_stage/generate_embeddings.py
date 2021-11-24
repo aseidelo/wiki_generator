@@ -105,4 +105,3 @@ if __name__ == '__main__':
     embeddings_inputs_file_path = "../../data/extractive_stage/cluster_embeddings/inputs_bert-base-portuguese-cased_train.npy"
     embeddings_outputs_file_path = "../../data/extractive_stage/cluster_embeddings/outputs_bert-base-portuguese-cased_train.npy"
     generate_dataset_embeddings(input_file_path, target_file_path, embeddings_inputs_file_path, embeddings_outputs_file_path, checkpoint)
-
