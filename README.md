@@ -14,7 +14,7 @@ The model was fine-tuned and tested on [_BrWac2Wiki_](https://github.com/aseidel
 
 ## Modules
 
-Bellow a brief description of what you will find on ```src/``` folder:
+Bellow a brief description of what you will find on ```src/``` and ```notebooks/``` folders:
 
 ### extractive_stage:
 The extractive_stage filter prominent sentences from the input documents. 
@@ -51,8 +51,8 @@ The algorithm will google the list of titles, scrap texts from retrieved urls, a
 
 ## Results
 
-We compared 7 different combinations of extractive and abstractive stages on unseen examples from [BrWac2Wiki](https://github.com/aseidelo/BrWac2Wiki). 
-TF-IDF + PTT5 with J (number of input tokens) = 512 had
+We compared ROUGE scores on 7 different combinations of extractive and abstractive stages on unseen examples from [BrWac2Wiki](https://github.com/aseidelo/BrWac2Wiki). 
+TF-IDF + PTT5 with J  = 512 (number of input tokens) had the higher ROUGE L score. 
 
 ![Results](https://github.com/aseidelo/plsum/blob/main/docs/results.png)
 
