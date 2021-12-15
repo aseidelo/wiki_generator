@@ -7,8 +7,9 @@ def load_ptt5(path, model_name, checkpoint):
     global tokenizer
     global model
     # load tokenizer and model
-    tokenizer = T5TokenizerFast.from_pretrained(path + model_name + '/' + checkpoint)
-    model = T5ForConditionalGeneration.from_pretrained(path + model_name + '/' + checkpoint, gradient_checkpointing=True, use_cache=False).to("cuda").half()
+    model_full_name = path + model_name + '/' + checkpoint if checkpoint != None else path + model_name 
+    tokenizer = T5TokenizerFast.from_pretrained(model_full_name)
+    model = T5ForConditionalGeneration.from_pretrained(model_full_name, use_cache=False).to("cuda").half()# gradient_checkpointing=True, use_cache=False).to("cuda").half()
     model.config.min_length = 50
 
 def load_ptt5_encoder(path, model_name, checkpoint):
