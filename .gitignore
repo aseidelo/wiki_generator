@@ -4,3 +4,4 @@ models/*
 data/*
 results/*
 *__pycache__
+wikigeneratorEnv

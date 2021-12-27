@@ -5,7 +5,7 @@ import nltk
 from nltk import word_tokenize 
 from gensim import corpora, models, similarities
 #from gensim.summarization import bm25
-import jieba
+#import jieba
 import re
 
 
