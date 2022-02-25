@@ -17,12 +17,12 @@ def embed_cluster(docs, query, embeddings, model, dim_reduction_model, n_tokens=
     print('\n\n')
     print(query)
     print(len(docs))
-    clf = NearestCentroid(metric='cosine')
+    clf = NearestCentroid(metric='euclidean')
     input_embeddings = embeddings[0]
     output_embeddings = embeddings[1]
     title_embedding = np.array([output_embeddings[0].tolist()])
-    umap_input_embeddings = normalize(dim_reduction_model.fit_transform(input_embeddings)) # reduce dim of input texts and normalize
-    umap_title_embeddings = normalize(dim_reduction_model.fit_transform(title_embedding)) # reduce dim of title and normalize
+    umap_input_embeddings = dim_reduction_model.fit_transform(input_embeddings) # normalize(dim_reduction_model.fit_transform(input_embeddings)) # reduce dim of input texts and normalize
+    umap_title_embeddings = dim_reduction_model.fit_transform(title_embedding) # normalize(dim_reduction_model.fit_transform(title_embedding)) # reduce dim of title and normalize
     model.fit(umap_input_embeddings) # cluster with DBSCAN
     print(model.labels_)
     point_clusters, clusters_sizes = np.unique(model.labels_, return_counts=True)
@@ -40,20 +40,22 @@ def embed_cluster(docs, query, embeddings, model, dim_reduction_model, n_tokens=
     #to_out_ind = sorted(range(len(point_clusters[1:])), key=lambda i: point_clusters[i], reverse=True) # sort distances
     centroid_to_title_distances = pairwise_distances(umap_title_embeddings, centroids, metric='euclidean') # get distances of centroids that are closer to the title embedding
     print(centroid_to_title_distances)
-    to_out_ind = sorted(range(len(centroid_to_title_distances[0])), key=lambda i: centroid_to_title_distances[0][i], reverse=False) # sort distances
+    dist_sorted_centroid_ind = sorted(range(len(centroid_to_title_distances[0])), key=lambda i: centroid_to_title_distances[0][i], reverse=False) # sort distances
     # return extractive summary
     to_out = []
     if(n_tokens != None):
         n = 0
-        for ind in to_out_ind:
-            n = n + len(docs[ind].split(' '))
+        for centroid_index in dist_sorted_centroid_ind:
+            to_out_sent_ind = argmin_sent_centroid[centroid_index]
+            print(to_out_sent_ind)
+            n = n + len(docs[to_out_sent_ind].split(' '))
             if(n > n_tokens):
                 break
-            to_out.append(docs[ind])
+            to_out.append(docs[to_out_sent_ind])
     elif(n_documents != None):
-        for ind in to_out_ind[:n_documents]:
-            to_out.append(docs[ind])
-    print(to_out_ind)
+        for centroid_index in dist_sorted_centroid_ind[:n_documents]:
+            to_out_sent_ind = argmin_sent_centroid[centroid_index]
+            to_out.append(docs[to_out_sent_ind])
     print(to_out)
     return to_out
 
@@ -82,4 +84,4 @@ if __name__ == '__main__':
     #cluster_model = DBSCAN(eps=eps, min_samples=min_samples, metric='cosine')
     cluster_model = hdbscan.HDBSCAN(min_cluster_size=5, metric='euclidean', cluster_selection_method='leaf')
     dim_reduction_model = umap.UMAP(n_neighbors=5, n_components=5, metric='euclidean')
-    dataset_embed_cluster(input_file_path, target_file_path, output_file_path, cluster_model, dim_reduction_model, n_tokens=500, n_documents=None)
+    dataset_embed_cluster(input_file_path, target_file_path, output_file_path, cluster_model, dim_reduction_model, n_tokens=1000, n_documents=None)
