@@ -7,6 +7,7 @@ from sklearn.preprocessing import normalize
 import pandas as pd
 import umap
 import hdbscan
+import time
 
 def warn(*args, **kwargs):
     pass
@@ -14,9 +15,9 @@ import warnings
 warnings.warn = warn
 
 def embed_cluster(docs, query, embeddings, model, dim_reduction_model, n_tokens=None, n_documents=None):
-    print('\n\n')
-    print(query)
-    print(len(docs))
+    #print('\n\n')
+    #print(query)
+    #print(len(docs))
     clf = NearestCentroid(metric='euclidean')
     input_embeddings = embeddings[0]
     output_embeddings = embeddings[1]
@@ -24,22 +25,69 @@ def embed_cluster(docs, query, embeddings, model, dim_reduction_model, n_tokens=
     umap_input_embeddings = dim_reduction_model.fit_transform(input_embeddings) # normalize(dim_reduction_model.fit_transform(input_embeddings)) # reduce dim of input texts and normalize
     umap_title_embeddings = dim_reduction_model.fit_transform(title_embedding) # normalize(dim_reduction_model.fit_transform(title_embedding)) # reduce dim of title and normalize
     model.fit(umap_input_embeddings) # cluster with DBSCAN
-    print(model.labels_)
     point_clusters, clusters_sizes = np.unique(model.labels_, return_counts=True)
-    print(clusters_sizes)
+    sorted_clusters_ind = sorted(range(len(model.cluster_persistence_)), key=lambda i: model.cluster_persistence_[i], reverse=True)
+    print('labels', model.labels_)
+    print('point_clusters', point_clusters)
+    print('cluster sizes', clusters_sizes)
+    print('cluster persistence', model.cluster_persistence_)
+    #print(argmin_sent_centroid)
+    #to_out_ind = sorted(range(len(point_clusters[1:])), key=lambda i: point_clusters[i], reverse=True) # sort distances
+    print('sorted cluster indexes', sorted_clusters_ind)
+    print('len sorted cluster indexes', len(sorted_clusters_ind))
+    print('len labels', len(point_clusters))
+    print('n points', len(model.labels_))
+    print('len exemplars', len(model.exemplars_))
+    to_out = []
+    n = 0
+    for cluster in sorted_clusters_ind:
+        cluster_exemplars = model.exemplars_[cluster]
+        print('cluster_id', cluster)
+        #print('exemplars', cluster_exemplars)
+        argmin_exemplar_title, distances_sent_centroid = pairwise_distances_argmin_min(umap_title_embeddings, cluster_exemplars, metric='euclidean')
+        print(argmin_exemplar_title)
+        #pos = np.where(umap_input_embeddings == cluster_exemplars[argmin_exemplar_title[0]])
+        pos, dist = pairwise_distances_argmin_min(cluster_exemplars[argmin_exemplar_title[0]].reshape(1, -1), umap_input_embeddings, metric='euclidean')
+        to_out_sent_ind = pos[0]
+        '''
+        to_out_sent_ind = None
+        if (len(pos[0]) != 0):
+            to_out_sent_ind = pos[0][0]
+        else:
+            break
+        '''
+        if(n_tokens != None):
+            #print(to_out_sent_ind)
+            n = n + len(docs[to_out_sent_ind].split(' '))
+            if(n > n_tokens):
+                break
+            to_out.append(docs[to_out_sent_ind])
+        elif(n_documents != None):
+            n = n + 1
+            if(n > n_documents):
+                break
+            to_out.append(docs[to_out_sent_ind])
+    print(to_out)
+    return to_out
+
+ 
+    '''
+        for exemplar in cluster_exemplars:
+            pos = np.where(umap_input_embeddings == exemplar)
+            #print('pos result', pos)
+            print(docs[pos[0][0]])
+    #print(clusters_sizes)
     centroids = None
     if(len(point_clusters) > 1):
         clf.fit(umap_input_embeddings, model.labels_) # get clusters centroids
         centroids = clf.centroids_[1:] # disconsider outliers label (first index)
     else:
         centroids = np.array([np.mean(umap_input_embeddings, axis=0)])
-    print(centroids.shape)
+    #print(centroids.shape)
     #print(centroids)
     argmin_sent_centroid, distances_sent_centroid = pairwise_distances_argmin_min(centroids, umap_input_embeddings, metric='euclidean') # get index and distance of sentence closer to centroid
-    print(argmin_sent_centroid)
-    #to_out_ind = sorted(range(len(point_clusters[1:])), key=lambda i: point_clusters[i], reverse=True) # sort distances
     centroid_to_title_distances = pairwise_distances(umap_title_embeddings, centroids, metric='euclidean') # get distances of centroids that are closer to the title embedding
-    print(centroid_to_title_distances)
+    #print(centroid_to_title_distances)
     dist_sorted_centroid_ind = sorted(range(len(centroid_to_title_distances[0])), key=lambda i: centroid_to_title_distances[0][i], reverse=False) # sort distances
     # return extractive summary
     to_out = []
@@ -47,7 +95,7 @@ def embed_cluster(docs, query, embeddings, model, dim_reduction_model, n_tokens=
         n = 0
         for centroid_index in dist_sorted_centroid_ind:
             to_out_sent_ind = argmin_sent_centroid[centroid_index]
-            print(to_out_sent_ind)
+            #print(to_out_sent_ind)
             n = n + len(docs[to_out_sent_ind].split(' '))
             if(n > n_tokens):
                 break
@@ -56,10 +104,13 @@ def embed_cluster(docs, query, embeddings, model, dim_reduction_model, n_tokens=
         for centroid_index in dist_sorted_centroid_ind[:n_documents]:
             to_out_sent_ind = argmin_sent_centroid[centroid_index]
             to_out.append(docs[to_out_sent_ind])
-    print(to_out)
+    #print(to_out)
     return to_out
+    '''
 
 def dataset_embed_cluster(input_file_path, target_file_path, output_file_path, model, dim_reduction_model, n_tokens=None, n_documents=None): 
+    i = 0
+    start_time = time.time()
     with open(embeddings_input_file_path, 'rb') as embeddings_input_file:
         with open(embeddings_target_file_path, 'rb') as embeddings_target_file:
             with open(output_file_path, 'wb') as output_file:
@@ -72,6 +123,11 @@ def dataset_embed_cluster(input_file_path, target_file_path, output_file_path, m
                     for sent in extractive_summary:
                         extractive_summary_str = extractive_summary_str + sent.replace('\n', '') + ' </s>'
                     output_file.write('{}\n'.format(extractive_summary_str).encode('utf-8'))
+                    if(i % 1 == 0):
+                        new_time = time.time()
+                        print("{}, {} - {:.1f} s".format(i, sample['title'], new_time - start_time))
+                        start_time = new_time
+                    i = i + 1
 
 if __name__ == '__main__':
     input_file_path = "../../data/wikisum_ptbr/train_test_split/input_train.csv"
